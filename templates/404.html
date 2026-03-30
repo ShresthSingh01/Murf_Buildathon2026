@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found — Medilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0" />
+</head>
+<body class="error-page">
+    <div class="aurora-container">
+        <div class="aurora-orb aurora-orb-1"></div>
+        <div class="aurora-orb aurora-orb-2"></div>
+    </div>
+    
+    <div class="container error-content">
+        <span class="material-symbols-rounded error-icon">search_off</span>
+        <h1>Page Not Found</h1>
+        <p>Sorry, we couldn't find the page you're looking for.</p>
+        <a href="{{ url_for('index') }}" class="action-btn primary">
+            <span class="material-symbols-rounded">home</span>
+            Return Home
+        </a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+.venv
+__pycache__
+*.pyc
+.env
+.session_store.db
+uploads/
+.git
+.gitignore

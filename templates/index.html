@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medilo — Your Medical Report, Explained Kindly</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0" />
+
+    <script>
+        (function() {
+            const saved = localStorage.getItem('medilo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Aurora Backdrop -->
+    <div class="aurora-container">
+        <div class="aurora-orb aurora-orb-1"></div>
+        <div class="aurora-orb aurora-orb-2"></div>
+        <div class="aurora-orb aurora-orb-3"></div>
+    </div>
+
+    <header class="award-header">
+        <div class="container nav-shell">
+            <div class="logo-wrap" aria-label="Medilo">
+                <div class="logo-icon">
+                    <span class="material-symbols-rounded">medical_services</span>
+                </div>
+                <div class="brand-copy">
+                    <p class="brand-title">Medilo</p>
+                    <p class="brand-subtitle">Health Clarity Assistant</p>
+                </div>
+            </div>
+
+            <div class="control-wrap">
+                <button id="theme-toggle" class="action-btn" aria-label="Toggle dark mode">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
+                <div class="divider"></div>
+                <button class="action-btn lang-btn active" data-lang="en">EN</button>
+                <button class="action-btn lang-btn" data-lang="hi">HI</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section id="hero-section" class="split-hero">
+            <div class="hero-copy reveal-up">
+                <span class="eyebrow">Fast and Accurate</span>
+                <h1>Understanding Your <span>Health Journey</span></h1>
+                <p class="hero-description">Transforming complex clinical data into simple, empathetic explanations for you and your family.</p>
+                <div class="hero-actions">
+                    <button class="vibrant-btn" id="hero-cta">
+                        Start Your Analysis
+                        <span class="material-symbols-rounded">arrow_forward</span>
+                    </button>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <span class="material-symbols-rounded">verified_user</span>
+                        <div>
+                            <span class="stat-value">100%</span>
+                            <span class="stat-label">Secure</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="material-symbols-rounded">speed</span>
+                        <div>
+                            <span class="stat-value">~42s</span>
+                            <span class="stat-label">Analysis</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="material-symbols-rounded">diversity_3</span>
+                        <div>
+                            <span class="stat-value">98%</span>
+                            <span class="stat-label">Clarity</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-image-wrap reveal-up">
+                <img src="{{ url_for('static', filename='images/medilo_hero_v4.png') }}" alt="Medical Healthcare Illustration" class="hero-img">
+                <div class="clarity-chip">
+                    <p class="score">99% Accuracy</p>
+                    <p class="label">PageIndex Reasoning</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload Section -->
+        <section id="upload-section" class="upload-stack reveal-up">
+            <div id="drop-zone" class="upload-panel">
+                <div class="upload-icon-wrap">
+                    <span class="material-symbols-rounded">clinical_notes</span>
+                </div>
+                <h2>Drop Your Report</h2>
+                <p class="upload-lead">We analyze all standard PDF clinical reports using advanced reasoning AI. Your data remains encrypted.</p>
+                
+                <div class="upload-flow">
+                    <div class="flow-item active" id="flow-item-select">
+                        <span class="material-symbols-rounded">upload</span>
+                        Select PDF
+                    </div>
+                    <div class="flow-item" id="flow-item-verify">
+                        <span class="material-symbols-rounded">check_circle</span>
+                        Verify
+                    </div>
+                    <div class="flow-item" id="flow-item-explain">
+                        <span class="material-symbols-rounded">psychology</span>
+                        Analyze
+                    </div>
+                </div>
+
+                <div class="upload-actions">
+                    <form id="upload-form">
+                        <input type="file" id="file-input" name="file" accept=".pdf" hidden>
+                        <button type="button" class="vibrant-btn" id="upload-btn">
+                            <span class="material-symbols-rounded">add_circle</span>
+                            Select Medical File
+                        </button>
+                        <p class="selected-file" id="selected-file-name"></p>
+                    </form>
+                </div>
+
+                <div id="process-btn-container" class="hidden process-wrap">
+                    <button class="vibrant-btn accent-btn" id="process-btn">
+                        <span class="material-symbols-rounded">smart_toy</span>
+                        Begin Health Analysis
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Floating Murf AI Branding Badge -->
+    <a href="https://murf.ai" target="_blank" class="sticky-murf-branding badge reveal-up in-view">
+        <img src="{{ url_for('static', filename='img/murf_logo_official.jpg') }}" alt="Murf AI Logo">
+        <div class="brand-text">
+            <span class="powered-by">Powered by</span>
+            <span class="brand-name">Murf AI</span>
+        </div>
+    </a>
+</body>
+</html>

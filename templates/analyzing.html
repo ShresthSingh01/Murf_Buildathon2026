@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyzing Report — Medilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0" />
+    <script>
+        (function() {
+            const saved = localStorage.getItem('medilo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Aurora Backdrop -->
+    <div class="aurora-container">
+        <div class="aurora-orb aurora-orb-1"></div>
+        <div class="aurora-orb aurora-orb-2"></div>
+        <div class="aurora-orb aurora-orb-3"></div>
+    </div>
+
+    <header class="award-header">
+        <div class="container nav-shell">
+            <div class="logo-wrap" aria-label="Medilo">
+                <div class="logo-icon">
+                    <span class="material-symbols-rounded">medical_services</span>
+                </div>
+                <p class="brand-title">Medilo</p>
+            </div>
+            <div class="control-wrap">
+                <button id="theme-toggle" class="action-btn" aria-label="Toggle dark mode">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="loading-section">
+            <div class="loading-card reveal-up in-view">
+                <svg class="ecg-line" viewBox="0 0 200 60">
+                    <path d="M0 30 L40 30 L45 20 L55 45 L65 10 L75 50 L80 30 L200 30" />
+                </svg>
+                <h3 id="status-label">Initializing Analysis...</h3>
+                <p id="status-detail">Our reasoning AI is processing your clinical biomarkers.</p>
+                
+                <div class="upload-flow" style="margin-top: 2rem;">
+                    <div class="flow-item done">
+                        <span class="material-symbols-rounded">upload</span>
+                        Select PDF
+                    </div>
+                    <div class="flow-item done">
+                        <span class="material-symbols-rounded">check_circle</span>
+                        Verify
+                    </div>
+                    <div class="flow-item active">
+                        <span class="material-symbols-rounded">psychology</span>
+                        Analyze
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Theme
+        const themeToggle = document.getElementById('theme-toggle');
+        function applyTheme() {
+            const theme = localStorage.getItem('medilo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-theme', theme);
+            themeToggle.querySelector('.material-symbols-rounded').textContent =
+                theme === 'dark' ? 'light_mode' : 'dark_mode';
+        }
+        applyTheme();
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('medilo-theme', next);
+            applyTheme();
+        });
+
+        // Polling
+        const reportId = "{{ report_id }}";
+        const statusLabel = document.getElementById('status-label');
+        const statusDetail = document.getElementById('status-detail');
+
+        const phrases = [
+            "Extracting clinical data...",
+            "Analyzing biomarkers...",
+            "Consulting health knowledge base...",
+            "Generating clinical narrative...",
+            "Applying empathetic simplification...",
+            "Finalizing report summary..."
+        ];
+        let phraseIdx = 0;
+
+        function updatePhrase() {
+            statusDetail.textContent = phrases[phraseIdx];
+            phraseIdx = (phraseIdx + 1) % phrases.length;
+        }
+
+        async function pollStatus() {
+            try {
+                const response = await fetch(`/status/${reportId}`);
+                const data = await response.json();
+                if (data.ready) {
+                    window.location.href = `/report/${reportId}`;
+                } else if (data.status) {
+                    statusLabel.textContent = data.status;
+                }
+            } catch (error) {
+                console.error("Polling error:", error);
+            }
+        }
+
+        setInterval(pollStatus, 3000);
+        setInterval(updatePhrase, 4000);
+        pollStatus();
+    </script>
+</body>
+</html>

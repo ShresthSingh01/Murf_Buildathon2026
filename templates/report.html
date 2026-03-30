@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Report Dashboard — Medilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0" />
+    <script>
+        // Apply saved theme IMMEDIATELY before paint to prevent flash
+        (function() {
+            const saved = localStorage.getItem('medilo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Aurora Backdrop -->
+    <div class="aurora-container">
+        <div class="aurora-orb aurora-orb-1"></div>
+        <div class="aurora-orb aurora-orb-2"></div>
+        <div class="aurora-orb aurora-orb-3"></div>
+    </div>
+
+    <header class="award-header">
+        <div class="container nav-shell">
+            <div class="logo-wrap" aria-label="Medilo">
+                <div class="logo-icon">
+                    <span class="material-symbols-rounded">medical_services</span>
+                </div>
+                <div class="brand-copy">
+                    <p class="brand-title">Medilo</p>
+                    <p class="brand-subtitle">Health Clarity Assistant</p>
+                </div>
+            </div>
+
+            <div class="control-wrap">
+                <button id="theme-toggle" class="action-btn" aria-label="Toggle dark mode">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="result-section">
+            <div class="report-container">
+                <!-- Patient Header -->
+                <div class="patient-id-card reveal-up in-view">
+                    <div class="patient-main">
+                        <div class="patient-avatar" id="patient-initials">
+                            {% if data.patient_info and data.patient_info.name %}
+                                {{ data.patient_info.name[0] }}
+                            {% else %}
+                                PN
+                            {% endif %}
+                        </div>
+                        <div class="patient-details">
+                            <h2 id="patient-name">{{ data.patient_info.name if data.patient_info else 'Patient Name' }}</h2>
+                            <p id="patient-meta">
+                                {{ data.patient_info.age if data.patient_info else 'N/A' }} • 
+                                {{ data.patient_info.gender if data.patient_info else 'N/A' }} • 
+                                {{ data.patient_info.centre if data.patient_info else 'Health Centre' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="report-meta">
+                        <p id="report-date">{{ data.patient_info.date if data.patient_info else 'Today' }}</p>
+                        <p id="report-id">ID: {{ report_id[:8].upper() }}</p>
+                    </div>
+                </div>
+
+                <div class="report-dashboard">
+                    <div class="report-main-column">
+                        <!-- Summary -->
+                        <div class="bento-card narrative-card reveal-up in-view">
+                            <div class="card-header">
+                                <span class="eyebrow">Medical Narrative</span>
+                            </div>
+                            <div id="narrative-content" class="narrative-text">
+                                {{ data.narrative_summary }}
+                            </div>
+                        </div>
+
+                        <!-- Urgent Box -->
+                        {% if data.urgent_action and data.urgent_action.title %}
+                        <div id="urgent-action-box" class="urgent-action-box reveal-up in-view">
+                            <div class="action-icon">
+                                <span class="material-symbols-rounded">warning</span>
+                            </div>
+                            <div class="action-copy">
+                                <h3 id="urgent-title">{{ data.urgent_action.title }}</h3>
+                                <p id="urgent-description">{{ data.urgent_action.description }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Metrics Grid -->
+                        <div id="metrics-grid" class="metrics-grid reveal-up in-view">
+                            {% for m in data.clinical_metrics %}
+                                <div class="bento-card metric-card" data-label="{{ m.label }}" data-desc="{{ m.description }}" data-status="{{ m.value_badge }}">
+                                    <div class="metric-header">
+                                        <div class="status-dot {{ m.status|lower if m.status else 'green' }}"></div>
+                                        <h3>{{ m.label }}</h3>
+                                    </div>
+                                    <p class="metric-desc">{{ m.description }}</p>
+                                    <div class="value-badge {{ m.status|lower if m.status else 'green' }}">{{ m.value_badge or m.value }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant Sidebar -->
+                    <div class="report-side-column">
+                        <div class="bento-card assistant-card reveal-up in-view" id="ai-assistant-card">
+                            <div class="card-header">
+                                <span class="eyebrow">Medical AI Assistant</span>
+                            </div>
+                            
+                            <!-- Voice Interaction Area -->
+                            <div class="assistant-interaction">
+                                <div class="mic-wrap">
+                                    <button id="voice-chat-btn" class="dock-mic-btn" aria-label="Talk to Report">
+                                        <span class="material-symbols-rounded">mic</span>
+                                    </button>
+                                    <div id="voice-status-pill" class="voice-status-pill">Ready</div>
+                                </div>
+                                
+                                <div class="assistant-controls">
+                                    <button id="play-audio-btn" class="dock-audio-btn">
+                                        <span class="material-symbols-rounded">volume_up</span>
+                                        <span id="play-audio-label">Listen to Summary</span>
+                                    </button>
+                                    <button id="share-card-btn" class="dock-audio-btn share-btn">
+                                        <span class="material-symbols-rounded">share</span>
+                                        <span>Generate Share Card</span>
+                                    </button>
+                                    <button id="stop-followup-btn" class="dock-audio-btn stop-btn" style="display: none;">
+                                        <span class="material-symbols-rounded">stop_circle</span>
+                                        <span>Stop Assistant</span>
+                                    </button>
+                                    <div id="audio-status" class="status-small" style="display: none;">Ready</div>
+                                </div>
+                            </div>
+
+                            <!-- Chat History / Response Area -->
+                            <div class="assistant-log" id="response-hud">
+                                <div id="voice-interaction-log" class="voice-log">
+                                    <div class="voice-bubble user" id="voice-question-text" style="font-style: italic;">...</div>
+                                    <div class="voice-bubble assistant" id="voice-answer-text">Ask me anything about your report.</div>
+                                </div>
+                            </div>
+
+                            <!-- Branding -->
+                            <a href="https://murf.ai" target="_blank" class="dock-branding" title="Powered by Murf AI">
+                                <div class="brand-text">
+                                    <span class="powered-by">POWERED BY</span>
+                                    <span class="brand-name">Murf AI</span>
+                                </div>
+                                <img src="{{ url_for('static', filename='img/murf_logo_official.jpg') }}" alt="Murf AI Logo">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <!-- Emergency Footer Fix (Outside main) -->
+    <footer class="dashboard-footer">
+        <div class="footer-divider"></div>
+        <a href="/" class="action-btn main-new-analysis-btn">
+            <span class="material-symbols-rounded">add_circle</span>
+            <span>Start New Report Analysis</span>
+        </a>
+        <p class="footer-tagline">Comprehensive Clinical Health Clarity — Powered by Medilo Intelligence</p>
+    </footer>
+
+    <!-- Share Card Modal -->
+    <div id="share-modal" class="modal-overlay">
+        <div class="share-modal-content bento-card">
+            <div class="card-branding">
+                <span class="material-symbols-rounded brand-icon">medical_services</span>
+                <span class="brand-name">Medilo</span>
+                <span class="card-badge">Health Snapshot</span>
+            </div>
+            
+            <div class="patient-info">
+                <div class="patient-avatar">{{ data.patient_info.name[0] if data.patient_info and data.patient_info.name else 'P' }}</div>
+                <div class="patient-meta">
+                    <h3>{{ data.patient_info.name or "Patient Report" }}</h3>
+                    <p>Analyzed: {{ data.patient_info.date or "Today" }}</p>
+                </div>
+            </div>
+
+            <div class="snapshot-highlights">
+                <div class="highlight-item">
+                    <span class="h-label">Status</span>
+                    <span class="h-value {{ 'urgent' if 'Urgent' in data.narrative_summary or 'Caution' in data.narrative_summary else 'stable' }}">
+                        {{ "Action Needed" if "Urgent" in data.narrative_summary else "Analyzed" }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="snapshot-metrics">
+                {% if data.clinical_metrics %}
+                    {% for metric in data.clinical_metrics[:3] %}
+                    <div class="s-metric">
+                        <span class="s-label">{{ metric.label }}</span>
+                        <span class="s-val">{{ metric.value_badge }}</span>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="snapshot-summary">
+                <p>{{ data.narrative_summary }}</p>
+            </div>
+
+            <div class="modal-actions">
+                <button id="download-share-card" class="modal-btn">Download Card</button>
+                <button id="native-share-card" class="modal-btn">Share</button>
+                <button id="close-share-modal" class="modal-btn secondary">Close</button>
+            </div>
+            <p id="share-card-status" class="status-small" style="display: none; margin-top: 0.75rem;"></p>
+        </div>
+    </div>
+
+    <script>
+        const reportId = "{{ report_id }}";
+        const currentLang = "{{ language }}";
+
+        // Polyfill for Canvas roundRect (Fixes "Stuck" Issue for older browsers)
+        if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
+                else r = { tl: r[0], tr: r[1], br: r[2], bl: r[3] };
+                this.beginPath();
+                this.moveTo(x + r.tl, y);
+                this.lineTo(x + w - r.tr, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r.tr);
+                this.lineTo(x + w, y + h - r.br);
+                this.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
+                this.lineTo(x + r.bl, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r.bl);
+                this.lineTo(x, y + r.tl);
+                this.quadraticCurveTo(x, y, x + r.tl, y);
+                this.closePath();
+                return this;
+            };
+        }
+
+        const narrativeContent = document.getElementById('narrative-content');
+        const playAudioBtn = document.getElementById('play-audio-btn');
+        const playAudioLabel = document.getElementById('play-audio-label');
+        const audioStatus = document.getElementById('audio-status');
+        const voiceChatBtn = document.getElementById('voice-chat-btn');
+        const voiceStatusPill = document.getElementById('voice-status-pill');
+        const voiceQuestionText = document.getElementById('voice-question-text');
+        const voiceAnswerText = document.getElementById('voice-answer-text');
+        const stopFollowupBtn = document.getElementById('stop-followup-btn');
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // Share Modal Selectors
+        const shareCardBtn = document.getElementById('share-card-btn');
+        const shareModal = document.getElementById('share-modal');
+        const closeShareModal = document.getElementById('close-share-modal');
+        const downloadShareCardBtn = document.getElementById('download-share-card');
+        const nativeShareCardBtn = document.getElementById('native-share-card');
+        const shareCardStatus = document.getElementById('share-card-status');
+
+        let currentAudio = null;
+        let currentFollowupAudio = null;
+        let isListening = false;
+        let recognition = null;
+
+        // --- Theme Toggle (persisted via localStorage) ---
+        function applyTheme() {
+            const theme = localStorage.getItem('medilo-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-theme', theme);
+            const icon = themeToggle?.querySelector('.material-symbols-rounded');
+            if (icon) {
+                icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+            }
+        }
+        applyTheme();
+
+        themeToggle?.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('medilo-theme', next);
+            applyTheme();
+        });
+
+        function setShareStatus(message, isError = false) {
+            if (!shareCardStatus) return;
+            shareCardStatus.style.display = 'block';
+            shareCardStatus.style.color = isError ? '#f87171' : 'var(--text-secondary)';
+            shareCardStatus.textContent = message;
+        }
+
+        function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 6) {
+            const words = (text || '').split(' ');
+            let line = '';
+            let linesDrawn = 0;
+            for (let n = 0; n < words.length; n++) {
+                const testLine = `${line}${words[n]} `;
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    ctx.fillText(line.trim(), x, y);
+                    line = `${words[n]} `;
+                    y += lineHeight;
+                    linesDrawn += 1;
+                    if (linesDrawn >= maxLines - 1) {
+                        break;
+                    }
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line && linesDrawn < maxLines) {
+                ctx.fillText(line.trim(), x, y);
+            }
+        }
+
+        async function buildShareCardBlob() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1350;
+            const ctx = canvas.getContext('2d');
+
+            const gradient = ctx.createLinearGradient(0, 0, 1080, 1350);
+            gradient.addColorStop(0, '#0F172A');
+            gradient.addColorStop(1, '#1E293B');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cardX = 70;
+            const cardY = 90;
+            const cardW = canvas.width - 140;
+            const cardH = canvas.height - 180;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+            ctx.strokeStyle = 'rgba(0, 212, 170, 0.35)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, cardW, cardH, 28);
+            ctx.fill();
+            ctx.stroke();
+
+            const patientName = document.getElementById('patient-name')?.textContent?.trim() || 'Patient Report';
+            const reportDate = document.getElementById('report-date')?.textContent?.trim() || 'Today';
+            const reportCode = document.getElementById('report-id')?.textContent?.trim() || 'ID: N/A';
+            const summaryText = document.querySelector('.snapshot-summary p')?.textContent?.trim() || '';
+            const statusText = document.querySelector('.snapshot-highlights .h-value')?.textContent?.trim() || 'Analyzed';
+
+            ctx.fillStyle = '#7DD3FC';
+            ctx.font = '700 44px "Segoe UI", sans-serif';
+            ctx.fillText('Medilo Health Snapshot', cardX + 48, cardY + 86);
+
+            ctx.fillStyle = '#E2E8F0';
+            ctx.font = '600 34px "Segoe UI", sans-serif';
+            ctx.fillText(patientName, cardX + 48, cardY + 160);
+
+            ctx.font = '500 24px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94A3B8';
+            ctx.fillText(`Analyzed: ${reportDate}`, cardX + 48, cardY + 205);
+            ctx.fillText(reportCode, cardX + 48, cardY + 240);
+
+            ctx.fillStyle = 'rgba(0, 212, 170, 0.14)';
+            ctx.beginPath();
+            ctx.roundRect(cardX + 48, cardY + 280, 300, 54, 14);
+            ctx.fill();
+            ctx.fillStyle = '#2DD4BF';
+            ctx.font = '700 24px "Segoe UI", sans-serif';
+            ctx.fillText(`Status: ${statusText}`, cardX + 68, cardY + 315);
+
+            const metrics = Array.from(document.querySelectorAll('.snapshot-metrics .s-metric')).slice(0, 3);
+            const metricY = cardY + 370;
+            const metricW = (cardW - 96 - 24) / 3;
+            metrics.forEach((metric, i) => {
+                const x = cardX + 48 + (metricW + 12) * i;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(x, metricY, metricW, 170, 16);
+                ctx.fill();
+                ctx.stroke();
+
+                const label = metric.querySelector('.s-label')?.textContent?.trim() || 'Metric';
+                const value = metric.querySelector('.s-val')?.textContent?.trim() || 'N/A';
+                ctx.fillStyle = '#94A3B8';
+                ctx.font = '600 18px "Segoe UI", sans-serif';
+                wrapCanvasText(ctx, label, x + 16, metricY + 42, metricW - 32, 22, 2);
+                ctx.fillStyle = '#67E8F9';
+                ctx.font = '700 26px "Segoe UI", sans-serif';
+                wrapCanvasText(ctx, value, x + 16, metricY + 102, metricW - 32, 28, 2);
+            });
+
+            ctx.fillStyle = '#CBD5E1';
+            ctx.font = '600 24px "Segoe UI", sans-serif';
+            ctx.fillText('Summary', cardX + 48, cardY + 610);
+            ctx.fillStyle = '#E2E8F0';
+            ctx.font = '400 22px "Segoe UI", sans-serif';
+            wrapCanvasText(ctx, summaryText, cardX + 48, cardY + 654, cardW - 96, 34, 8);
+
+            ctx.fillStyle = '#64748B';
+            ctx.font = '500 20px "Segoe UI", sans-serif';
+            ctx.fillText('Generated by Medilo', cardX + 48, cardY + cardH - 36);
+
+            return await new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Unable to generate share card image.'));
+                }, 'image/png', 0.95);
+            });
+        }
+
+        async function downloadShareCard() {
+            try {
+                setShareStatus('Generating share card...');
+                const blob = await buildShareCardBlob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `medilo-share-card-${reportId.slice(0, 8)}.png`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(downloadUrl);
+                setShareStatus('Share card downloaded.');
+            } catch (error) {
+                console.error('Share card download failed:', error);
+                setShareStatus('Unable to generate card. Please try again.', true);
+            }
+        }
+
+        async function nativeShareCard() {
+            try {
+                setShareStatus('Preparing card for sharing...');
+                const blob = await buildShareCardBlob();
+                const file = new File([blob], `medilo-share-card-${reportId.slice(0, 8)}.png`, { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Medilo Health Snapshot',
+                        text: 'Generated from my medical report analysis on Medilo.',
+                        files: [file]
+                    });
+                    setShareStatus('Shared successfully.');
+                } else {
+                    await downloadShareCard();
+                }
+            } catch (error) {
+                if (error && error.name === 'AbortError') {
+                    setShareStatus('Share cancelled.');
+                    return;
+                }
+                console.error('Native share failed:', error);
+                setShareStatus('Share not available here. Card downloaded instead.');
+                await downloadShareCard();
+            }
+        }
+
+        // --- Share Card Logic ---
+        shareCardBtn?.addEventListener('click', () => {
+            shareModal.classList.add('active');
+            setShareStatus('Ready to generate your share card.');
+        });
+
+        closeShareModal?.addEventListener('click', () => {
+            shareModal.classList.remove('active');
+            if (shareCardStatus) shareCardStatus.style.display = 'none';
+        });
+
+        downloadShareCardBtn?.addEventListener('click', downloadShareCard);
+        nativeShareCardBtn?.addEventListener('click', nativeShareCard);
+
+        // Close on background click
+        shareModal?.addEventListener('click', (e) => {
+            if (e.target === shareModal) shareModal.classList.remove('active');
+        });
+
+        function stopFollowupAudio() {
+            if (currentFollowupAudio) {
+                currentFollowupAudio.pause();
+                currentFollowupAudio.currentTime = 0;
+                currentFollowupAudio = null;
+            }
+            stopFollowupBtn.style.display = 'none';
+        }
+
+        stopFollowupBtn.addEventListener('click', stopFollowupAudio);
+
+        // --- Audio: Refactored logic to use browser events ---
+        function setAudioListeners(audio) {
+            audio.onplay = () => {
+                playAudioLabel.textContent = 'Pause Summary';
+                playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'pause_circle';
+                audioStatus.textContent = 'Playing...';
+            };
+            audio.onpause = () => {
+                playAudioLabel.textContent = 'Resume Summary';
+                playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'play_circle';
+                audioStatus.textContent = 'Paused';
+            };
+            audio.onended = () => {
+                playAudioLabel.textContent = 'Listen to Summary';
+                playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                audioStatus.textContent = 'Finished';
+                currentAudio = null;
+            };
+            audio.onerror = (e) => {
+                console.error("Audio Load Error (Retrying with Browser TTS):", e);
+                // Fallback to Browser Speech Synthesis automatically on load error
+                const textToSpeak = narrativeContent.textContent.trim();
+                triggerBrowserTTS(textToSpeak);
+            };
+        }
+
+        function triggerBrowserTTS(text) {
+            if ('speechSynthesis' in window) {
+                // If already playing browser TTS, toggle pause/resume
+                if (speechSynthesis.speaking && !speechSynthesis.paused) {
+                    speechSynthesis.pause();
+                    playAudioLabel.textContent = 'Resume Summary';
+                    playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'play_circle';
+                    return;
+                } else if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                    playAudioLabel.textContent = 'Pause Summary';
+                    playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'pause_circle';
+                    return;
+                }
+
+                // New Speech Start
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
+                utterance.rate = 1.0;
+                utterance.onstart = () => {
+                    playAudioLabel.textContent = 'Pause Summary';
+                    playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'pause_circle';
+                    audioStatus.textContent = 'Browser TTS active';
+                };
+                utterance.onend = () => {
+                    playAudioLabel.textContent = 'Listen to Summary';
+                    playAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                    audioStatus.textContent = 'Finished';
+                };
+                speechSynthesis.speak(utterance);
+            } else {
+                playAudioLabel.textContent = 'Audio Unavail.';
+                audioStatus.textContent = 'Not supported';
+            }
+        }
+
+        const preloadedUrl = "{{ audio_url|default('', true) }}";
+        if (preloadedUrl) {
+            currentAudio = new Audio(preloadedUrl);
+            setAudioListeners(currentAudio);
+            audioStatus.textContent = 'Audio ready';
+        }
+
+        playAudioBtn.addEventListener('click', async () => {
+            // Priority 1: Handle MP3 Audio if it exists and is valid
+            if (currentAudio && currentAudio.src) {
+                if (currentAudio.paused) {
+                    currentAudio.play().catch(e => {
+                        console.error("MP3 Play failed, falling back to TTS:", e);
+                        currentAudio = null;
+                        triggerBrowserTTS(narrativeContent.textContent.trim());
+                    });
+                } else {
+                    currentAudio.pause();
+                }
+                return;
+            }
+
+            // Priority 2: Handle active Browser TTS (Pause/Resume existing)
+            if (window.speechSynthesis.speaking) {
+                // If it's the summary speaking, toggle pause
+                // But if it's the assistant voice, we stop the assistant and start summary
+                if (audioStatus.textContent.includes('TTS')) {
+                    triggerBrowserTTS(""); // Toggle current summary TTS
+                    return;
+                } else {
+                    window.speechSynthesis.cancel(); // Stop assistant/other voice
+                }
+            }
+
+            // Priority 3: Start New Summary
+            playAudioBtn.disabled = true;
+            playAudioLabel.textContent = 'Generating...';
+            audioStatus.textContent = 'Synthesizing voice...';
+            audioStatus.style.display = 'block';
+
+            const summaryText = narrativeContent.textContent.trim();
+            try {
+                const resp = await fetch('/generate-voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: summaryText, language: currentLang })
+                });
+                const data = await resp.json();
+                
+                if (data.audioUrl) {
+                    currentAudio = new Audio(data.audioUrl);
+                    setAudioListeners(currentAudio);
+                    currentAudio.play().catch(e => {
+                        console.error("Audio play failed, using fallback:", e);
+                        triggerBrowserTTS(summaryText);
+                    });
+                    playAudioBtn.disabled = false;
+                } else {
+                    // Fallback to Browser Speech Synthesis if Murf skips or fails
+                    console.log('DEBUG: Murf skipped or error, using Browser TTS fallback.');
+                    triggerBrowserTTS(summaryText);
+                    playAudioBtn.disabled = false;
+                }
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                playAudioBtn.disabled = false;
+                playAudioLabel.textContent = 'Listen to Summary';
+            }
+        });
+
+        // --- Typewriter Effect ---
+        const originalText = narrativeContent.textContent.trim();
+        typewriterEffect(narrativeContent, originalText);
+
+        function typewriterEffect(el, text) {
+            el.innerHTML = '';
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    el.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, 15);
+                }
+            }
+            type();
+        }
+
+        // --- Voice Assistant ---
+        const isSpeechSupported = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+        if (!isSpeechSupported) {
+            voiceChatBtn.style.opacity = '0.5';
+            voiceChatBtn.title = 'Speech recognition not supported in this browser';
+        }
+
+        voiceChatBtn.addEventListener('click', () => {
+            if (!isSpeechSupported) {
+                alert("Speech recognition is not supported in your browser. Please try Chrome or Edge.");
+                return;
+            }
+
+            if (!recognition) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                // Set language dynamically
+                recognition.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
+                console.log("DEBUG: Voice recognition set to:", recognition.lang);
+
+                recognition.onstart = () => {
+                    isListening = true;
+                    voiceStatusPill.textContent = 'Listening...';
+                    voiceStatusPill.dataset.state = 'listening';
+                    voiceChatBtn.querySelector('.material-symbols-rounded').textContent = 'stop_circle';
+                    voiceChatBtn.classList.add('recording');
+                };
+
+                recognition.onresult = (e) => {
+                    const transcript = e.results[0][0].transcript;
+                    voiceQuestionText.textContent = transcript;
+                    // Show HUD
+                    document.getElementById('response-hud').style.display = 'block';
+                    document.getElementById('voice-interaction-log').classList.remove('hidden');
+                    submitFollowup(transcript);
+                };
+
+                recognition.onerror = (e) => {
+                    console.error("Speech Error:", e.error);
+                    voiceStatusPill.textContent = 'Error: ' + e.error;
+                };
+
+                recognition.onend = () => {
+                    isListening = false;
+                    voiceStatusPill.dataset.state = 'idle';
+                    voiceStatusPill.classList.remove('voice-pulse-active'); // Stop Pulse
+                    voiceChatBtn.querySelector('.material-symbols-rounded').textContent = 'mic';
+                    voiceChatBtn.classList.remove('recording');
+                    if (voiceStatusPill.textContent === 'Listening...') {
+                        voiceStatusPill.textContent = 'Ready';
+                    }
+                };
+            }
+
+            if (recognition) {
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    stopFollowupAudio();
+                    speechSynthesis.cancel(); // Stop any pending speech
+                    recognition.start();
+                    voiceStatusPill.classList.add('voice-pulse-active'); // Start Pulse
+                }
+            }
+        });
+
+        // ============ RATE LIMITING & DEBOUNCING ============
+        let askDebounceTimer = null;
+        let lastSubmittedQuestion = '';
+        const DEBOUNCE_MS = 3000; // Ignore same question within 3 seconds
+        const RATE_LIMIT_DISPLAY_TIME = 5000; // Show rate limit message for 5 seconds
+
+        async function submitFollowup(q) {
+            // Debounce: Ignore if same question submitted recently
+            if (q === lastSubmittedQuestion && askDebounceTimer) return;
+            lastSubmittedQuestion = q;
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout
+            
+            try {
+                // Check rate limit
+                const rateCheck = await fetch('/check-rate-limit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reportId: reportId, question: q })
+                });
+                const rateData = await rateCheck.json();
+                
+                if (!rateData.allowed) {
+                    voiceStatusPill.textContent = 'Rate Limited';
+                    voiceStatusPill.classList.add('error-pulse');
+                    voiceAnswerText.innerHTML = `<span style="color: var(--text-secondary)">Please wait ${rateData.retry_after}s.</span>`;
+                    setTimeout(() => {
+                        voiceStatusPill.classList.remove('error-pulse');
+                        voiceStatusPill.textContent = 'Ready';
+                        voiceStatusPill.classList.remove('thinking-pulse');
+                    }, RATE_LIMIT_DISPLAY_TIME);
+                    return;
+                }
+
+                voiceStatusPill.textContent = 'Thinking...';
+                voiceStatusPill.classList.add('thinking-pulse');
+                voiceAnswerText.innerHTML = '<span class="typing-indicator">Analyzing context...</span>';
+
+                const resp = await fetch('/ask-followup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reportId: reportId, question: q, language: currentLang }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                const data = await resp.json();
+                
+                voiceAnswerText.textContent = data.answer || data.error;
+                
+                if (data.audioUrl) {
+                    stopFollowupAudio();
+                    currentFollowupAudio = new Audio(data.audioUrl);
+                    currentFollowupAudio.play().catch(e => {
+                        console.warn("Followup audio fail, fallback to browser TTS");
+                        speakAssistantAnswer(data.answer);
+                    });
+                    stopFollowupBtn.style.display = 'flex';
+                    currentFollowupAudio.onended = () => {
+                        stopFollowupBtn.style.display = 'none';
+                        currentFollowupAudio = null;
+                    };
+                } else if (data.answer) {
+                    speakAssistantAnswer(data.answer);
+                }
+            } catch (e) {
+                console.error("Assistant Error:", e);
+                voiceAnswerText.textContent = e.name === 'AbortError' 
+                    ? "Answer timed out. Please try a simpler question." 
+                    : "Something went wrong. Please check your connection.";
+            } finally {
+                voiceStatusPill.classList.remove('thinking-pulse');
+                if (voiceStatusPill.textContent === 'Thinking...') {
+                    voiceStatusPill.textContent = 'Ready';
+                }
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function speakAssistantAnswer(text) {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
+                utterance.onstart = () => stopFollowupBtn.style.display = 'flex';
+                utterance.onend = () => stopFollowupBtn.style.display = 'none';
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- Metric Card Voice ---
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', async () => {
+                if (card.classList.contains('playing')) return;
+                card.classList.add('playing');
+                const text = `${card.dataset.label}. ${card.dataset.desc}. Status: ${card.dataset.status}.`;
+                try {
+                    const resp = await fetch('/generate-voice', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text, language: currentLang })
+                    });
+                    const data = await resp.json();
+                    if (data.audioUrl) {
+                        const a = new Audio(data.audioUrl);
+                        a.play();
+                        a.onended = () => card.classList.remove('playing');
+                    } else { card.classList.remove('playing'); }
+                } catch(e) { card.classList.remove('playing'); }
+            });
+        });
+
+    </script>
+
+</body>
+</html>
