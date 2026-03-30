@@ -7,6 +7,7 @@ Medilo is a senior-friendly clinical dashboard application built to simplify com
 - **Voice Interactions with Murf AI**: Fully integrated human-like health narrators. Read back complex summaries in senior-friendly dictation, providing accessible auditory learning natively in English and Hindi seamlessly.
 - **Interactive Parameter Cards**: Click directly on any clinical health metric (like Cholesterol or Glucose) to instantly hear a Murf AI-synthesized, senior-friendly voice explanation of that specific parameter, making health data accessible without straining to read.
 - **Generate Share Cards**: Seamlessly export a beautifully formatted "Share Card" of your simplified health report. This feature allows elderly patients or their caretakers to easily share vital health snapshots with family members or doctors.
+- **Talk to Report (Q&A Co-Pilot)**: Engage directly with your clinical results. Ask customized follow-up questions verbally or via text and receive immediate, context-aware answers grounded entirely in your specific medical data.
 
 ## 🚀 Tech Stack Breakdown
 
