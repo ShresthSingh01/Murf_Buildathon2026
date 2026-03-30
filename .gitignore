@@ -1,0 +1,32 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Secrets and keys
+*.key
+*.pem
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and local databases
+*.log
+*.sqlite3
+*.db
+.session_store.db
+
+# User Uploads and Temp generated files
+uploads/
+/static/audio/*
+!/static/audio/.keep
