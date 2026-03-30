@@ -1,6 +1,12 @@
-# Medilo / MediSpeak
+# Medilo
 
-Medilo (MediSpeak) is a senior-friendly clinical dashboard application built to simplify complex medical PDF reports. By integrating high-end indexing, LLM summaries, and voice synthesis, it transforms complicated clinical diagnostics into clear, compassionate, and actionable advice that elderly users can actually understand.
+Medilo is a senior-friendly clinical dashboard application built to simplify complex medical PDF reports. By integrating high-end indexing, LLM summaries, and voice synthesis, it transforms complicated clinical diagnostics into clear, compassionate, and actionable advice that elderly users can actually understand.
+
+## ✨ Key Features
+- **Intelligent RAG powered by PageIndex**: Deep cognitive reasoning on medical reports. Transcribes complex PDFs into a hierarchical reasoning tree, providing highly accurate answers to your health queries without hallucinations. 
+- **Voice Interactions with Murf AI**: Fully integrated human-like health narrators. Read back complex summaries in senior-friendly dictation, providing accessible auditory learning natively in English and Hindi seamlessly.
+- **Interactive Parameter Cards**: Click directly on any clinical health metric (like Cholesterol or Glucose) to instantly hear a Murf AI-synthesized, senior-friendly voice explanation of that specific parameter, making health data accessible without straining to read.
+- **Generate Share Cards**: Seamlessly export a beautifully formatted "Share Card" of your simplified health report. This feature allows elderly patients or their caretakers to easily share vital health snapshots with family members or doctors.
 
 ## 🚀 Tech Stack Breakdown
 
